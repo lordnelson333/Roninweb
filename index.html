@@ -6,375 +6,133 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#050508">
 <title>THE RONIN // ORIGINAL IP</title>
-
-<!-- fonts hosted on jsDelivr — works on GitHub Pages -->
-
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Share+Tech+Mono&display=swap');
 
-/* ── FONT FALLBACK STACK ──
-   If Google Fonts is blocked, Impact/Arial Narrow look close to Bebas Neue,
-   and Courier New is a solid monospace fallback. */
-
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 html{font-size:16px;scroll-behavior:smooth;-webkit-text-size-adjust:100%;}
-body{
-  background:#050508;
-  color:#e8e0d0;
-  font-family:'Bebas Neue',Impact,'Arial Narrow',Arial,sans-serif;
-  overflow-x:hidden;
-}
+body{background:#050508;color:#e8e0d0;font-family:‘Bebas Neue’,Impact,‘Arial Narrow’,Arial,sans-serif;overflow-x:hidden;}
 img{display:block;width:100%;height:auto;}
 a{text-decoration:none;color:inherit;}
+:root{–pink:#ff2d6b;–cyan:#00f5ff;–gold:#ffd700;–text:#e8e0d0;–muted:#666;–p:20px;}
+body::after{content:’’;position:fixed;inset:0;z-index:9999;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.05) 3px,rgba(0,0,0,0.05) 4px);pointer-events:none;}
 
-:root{
-  --pink:#ff2d6b;
-  --cyan:#00f5ff;
-  --gold:#ffd700;
-  --text:#e8e0d0;
-  --muted:#666;
-  --p:20px;
-}
-
-/* scanlines */
-body::after{
-  content:'';position:fixed;inset:0;z-index:9999;
-  background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.05) 3px,rgba(0,0,0,0.05) 4px);
-  pointer-events:none;
-}
-
-/* ══ NAV ══ */
-nav{
-  position:fixed;top:0;left:0;right:0;z-index:500;height:54px;
-  display:flex;align-items:center;justify-content:space-between;
-  padding:0 var(--p);
-  background:#050508;
-  border-bottom:1px solid rgba(255,45,107,0.18);
-}
-.nav-logo{
-  font-family:'Bebas Neue',Impact,'Arial Narrow',Arial,sans-serif;
-  font-size:1.3rem;letter-spacing:5px;color:#e8e0d0;
-}
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:500;height:54px;display:flex;align-items:center;justify-content:space-between;padding:0 var(–p);background:#050508;border-bottom:1px solid rgba(255,45,107,0.18);}
+.nav-logo{font-family:‘Bebas Neue’,Impact,‘Arial Narrow’,Arial,sans-serif;font-size:1.3rem;letter-spacing:5px;color:#e8e0d0;}
 .nav-logo span{color:#ff2d6b;}
-.nav-pill{
-  font-family:'Share Tech Mono','Courier New',monospace;
-  font-size:0.5rem;color:#00f5ff;
-  border:1px solid rgba(0,245,255,0.3);
-  padding:4px 10px;letter-spacing:2px;
-  display:flex;align-items:center;gap:5px;
-}
-.nav-pill::before{content:"&#9679;";font-size:0.4rem;animation:blink 1.5s infinite;}
+.nav-pill{font-family:‘Share Tech Mono’,‘Courier New’,monospace;font-size:0.5rem;color:#00f5ff;border:1px solid rgba(0,245,255,0.3);padding:4px 10px;letter-spacing:2px;display:flex;align-items:center;gap:5px;}
+.nav-pill::before{content:”●”;font-size:0.4rem;animation:blink 1.5s infinite;}
 .ham{display:flex;flex-direction:column;justify-content:center;gap:5px;width:30px;height:30px;cursor:pointer;}
 .ham span{display:block;width:22px;height:2px;background:#e8e0d0;transition:all 0.28s;border-radius:1px;}
 .ham.open span:nth-child(1){transform:translateY(7px) rotate(45deg);}
 .ham.open span:nth-child(2){opacity:0;}
 .ham.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg);}
-
-.menu{
-  position:fixed;top:54px;left:0;right:0;bottom:0;z-index:499;
-  background:#050508;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:32px;
-  transform:translateX(100%);
-  transition:transform 0.32s cubic-bezier(0.4,0,0.2,1);
-}
+.menu{position:fixed;top:54px;left:0;right:0;bottom:0;z-index:499;background:#050508;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:32px;transform:translateX(100%);transition:transform 0.32s cubic-bezier(0.4,0,0.2,1);}
 .menu.open{transform:translateX(0);}
-.menu a{
-  font-family:'Bebas Neue',Impact,'Arial Narrow',Arial,sans-serif;
-  font-size:2.6rem;letter-spacing:8px;color:#e8e0d0;
-}
+.menu a{font-family:‘Bebas Neue’,Impact,‘Arial Narrow’,Arial,sans-serif;font-size:2.6rem;letter-spacing:8px;color:#e8e0d0;}
 .menu a.cta{color:#ff2d6b;}
-.menu-foot{
-  position:absolute;bottom:40px;
-  font-family:'Share Tech Mono','Courier New',monospace;
-  font-size:0.5rem;color:#555;letter-spacing:3px;
-}
+.menu-foot{position:absolute;bottom:40px;font-family:‘Share Tech Mono’,‘Courier New’,monospace;font-size:0.5rem;color:#555;letter-spacing:3px;}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
 
-/* ══ HERO ══ */
+/* HERO */
 #hero{margin-top:54px;display:flex;flex-direction:column;background:#050508;}
-
-.hero-img{
-  position:relative;width:100%;
-  padding-bottom:90%;
-  overflow:hidden;flex-shrink:0;
-}
-.hero-img img{
-  position:absolute;top:0;left:0;
-  width:100%;height:100%;
-  object-fit:cover;object-position:top center;
-}
-.hero-img::after{
-  content:'';position:absolute;bottom:0;left:0;right:0;height:40%;
-  background:linear-gradient(to bottom,transparent,#050508);
-}
-.hero-img-tag{
-  position:absolute;bottom:12px;left:var(--p);z-index:2;
-  font-family:'Share Tech Mono','Courier New',monospace;
-  font-size:0.5rem;color:#ff2d6b;
-  border:1px solid rgba(255,45,107,0.35);
-  padding:4px 10px;letter-spacing:2px;
-  background:rgba(5,5,8,0.8);
-}
-
-.hero-body{
-  padding:24px var(--p) 32px;
-  background:linear-gradient(to bottom,#050508,#080112 60%,#050508);
-}
-
-.eyebrow{
-  display:inline-flex;align-items:center;
-  font-family:'Share Tech Mono','Courier New',monospace;
-  font-size:0.55rem;color:#00f5ff;
-  border:1px solid rgba(0,245,255,0.22);
-  padding:5px 12px;margin-bottom:16px;letter-spacing:2px;
-}
-
-.hero-title{
-  font-family:'Bebas Neue',Impact,'Arial Narrow',Arial,sans-serif;
-  font-size:clamp(3.8rem,19vw,5.5rem);
-  line-height:0.88;letter-spacing:2px;
-  margin-bottom:14px;color:#e8e0d0;
-}
-.hero-title .the{
-  display:block;font-size:0.4em;
-  letter-spacing:16px;
-  color:rgba(232,224,208,0.28);margin-bottom:4px;
-}
+.hero-img{position:relative;width:100%;padding-bottom:90%;overflow:hidden;flex-shrink:0;}
+.hero-img img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;object-position:top center;}
+.hero-img::after{content:’’;position:absolute;bottom:0;left:0;right:0;height:40%;background:linear-gradient(to bottom,transparent,#050508);}
+.hero-img-tag{position:absolute;bottom:12px;left:var(–p);z-index:2;font-family:‘Share Tech Mono’,‘Courier New’,monospace;font-size:0.5rem;color:#ff2d6b;border:1px solid rgba(255,45,107,0.35);padding:4px 10px;letter-spacing:2px;background:rgba(5,5,8,0.8);}
+.hero-body{padding:28px var(–p) 36px;background:linear-gradient(to bottom,#050508,#080112 60%,#050508);}
+.eyebrow{display:inline-flex;align-items:center;font-family:‘Share Tech Mono’,‘Courier New’,monospace;font-size:0.55rem;color:#00f5ff;border:1px solid rgba(0,245,255,0.22);padding:5px 12px;margin-bottom:18px;letter-spacing:2px;}
+.hero-title{font-family:‘Bebas Neue’,Impact,‘Arial Narrow’,Arial,sans-serif;font-size:clamp(3.8rem,19vw,5.5rem);line-height:0.88;letter-spacing:2px;margin-bottom:16px;color:#e8e0d0;}
+.hero-title .the{display:block;font-size:0.4em;letter-spacing:16px;color:rgba(232,224,208,0.28);margin-bottom:4px;}
 .hero-title .slash{color:#ff2d6b;}
-
-.tagline{
-  font-family:'Share Tech Mono','Courier New',monospace;
-  font-size:0.58rem;letter-spacing:4px;color:#00f5ff;
-  margin-bottom:18px;
-  line-height:1.6;
-}
-
-.hero-desc{
-  font-family:'Share Tech Mono','Courier New',monospace;
-  font-size:0.78rem;
-  line-height:2.1;
-  color:rgba(232,224,208,0.65);
-  margin-bottom:20px;
-}
-.hero-desc .hl{color:#ff2d6b;}
-.hero-desc .hl2{color:#00f5ff;}
-
-.pills{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px;}
-.pill{
-  font-family:'Share Tech Mono','Courier New',monospace;
-  font-size:0.52rem;letter-spacing:1.5px;
-  padding:5px 12px;
-  border:1px solid rgba(255,255,255,0.12);
-  color:rgba(232,224,208,0.45);
-  line-height:1;
-}
+.tagline{font-family:‘Share Tech Mono’,‘Courier New’,monospace;font-size:0.58rem;letter-spacing:4px;color:#00f5ff;margin-bottom:20px;line-height:1.6;}
+.hero-desc{font-family:‘Share Tech Mono’,‘Courier New’,monospace;font-size:0.78rem;line-height:2.2;color:rgba(232,224,208,0.65);margin-bottom:22px;}
+.hero-desc .hl{color:#ff2d6b;}.hero-desc .hl2{color:#00f5ff;}
+.pills{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:26px;}
+.pill{font-family:‘Share Tech Mono’,‘Courier New’,monospace;font-size:0.52rem;letter-spacing:1.5px;padding:5px 12px;border:1px solid rgba(255,255,255,0.12);color:rgba(232,224,208,0.45);line-height:1;}
 .pill.lit{border-color:#ff2d6b;color:#ff2d6b;}
-
-.hero-btns{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px;}
-.btn{
-  font-family:'Share Tech Mono','Courier New',monospace;
-  font-size:0.65rem;letter-spacing:2px;text-transform:uppercase;
-  padding:16px 10px;text-align:center;cursor:pointer;
-  -webkit-appearance:none;display:block;border-radius:0;
-  line-height:1;
-}
+.hero-btns{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:26px;}
+.btn{font-family:‘Share Tech Mono’,‘Courier New’,monospace;font-size:0.65rem;letter-spacing:2px;text-transform:uppercase;padding:16px 10px;text-align:center;cursor:pointer;-webkit-appearance:none;display:block;border-radius:0;line-height:1;}
 .btn-fill{background:#ff2d6b;color:#000;font-weight:700;border:none;}
 .btn-outline{background:transparent;color:#00f5ff;border:1px solid #00f5ff;}
-
-.stats-strip{
-  display:flex;
-  border:1px solid rgba(255,255,255,0.07);
-  border-top:1px solid rgba(255,45,107,0.22);
-}
-.stat{
-  flex:1;padding:12px 6px;text-align:center;
-  border-right:1px solid rgba(255,255,255,0.05);
-  font-family:'Share Tech Mono','Courier New',monospace;
-  font-size:0.46rem;letter-spacing:1px;color:#555;
-  line-height:1.4;
-}
+.stats-strip{display:flex;border:1px solid rgba(255,255,255,0.07);border-top:1px solid rgba(255,45,107,0.22);}
+.stat{flex:1;padding:14px 6px;text-align:center;border-right:1px solid rgba(255,255,255,0.05);font-family:‘Share Tech Mono’,‘Courier New’,monospace;font-size:0.46rem;letter-spacing:1px;color:#555;line-height:1.4;}
 .stat:last-child{border-right:none;}
-.sv{
-  font-family:'Bebas Neue',Impact,'Arial Narrow',Arial,sans-serif;
-  font-size:1.05rem;letter-spacing:2px;line-height:1;margin-bottom:4px;
-}
+.sv{font-family:‘Bebas Neue’,Impact,‘Arial Narrow’,Arial,sans-serif;font-size:1.05rem;letter-spacing:2px;line-height:1;margin-bottom:4px;}
 .sv.p{color:#ff2d6b;}.sv.c{color:#00f5ff;}.sv.g{color:#ffd700;}
 
-/* ══ DIVIDER ══ */
 .divider{height:1px;background:linear-gradient(to right,transparent,rgba(255,45,107,0.4),rgba(0,245,255,0.2),transparent);}
 
-/* ══ SHARED ══ */
-section{padding:60px var(--p);}
+/* SECTIONS — generous padding top so headings never feel crammed */
+section{padding:72px var(–p) 64px;}
 #about{background:#09090f;}
 #gallery{background:#0d0d18;}
 #links{background:#050508;}
 
-.sec-head{display:flex;align-items:center;gap:14px;margin-bottom:36px;}
-.sec-num{
-  font-family:'Share Tech Mono','Courier New',monospace;
-  font-size:0.55rem;color:#ff2d6b;letter-spacing:3px;flex-shrink:0;
-}
-.sec-title{
-  font-family:'Bebas Neue',Impact,'Arial Narrow',Arial,sans-serif;
-  font-size:clamp(1.7rem,7.5vw,2.8rem);
-  letter-spacing:4px;line-height:1;color:#e8e0d0;
-}
+.sec-head{display:flex;align-items:center;gap:14px;margin-bottom:40px;}
+.sec-num{font-family:‘Share Tech Mono’,‘Courier New’,monospace;font-size:0.55rem;color:#ff2d6b;letter-spacing:3px;flex-shrink:0;}
+.sec-title{font-family:‘Bebas Neue’,Impact,‘Arial Narrow’,Arial,sans-serif;font-size:clamp(1.8rem,8vw,3rem);letter-spacing:4px;line-height:1;color:#e8e0d0;}
 .sec-title .a{color:#ff2d6b;}
-.sec-line{flex:1;height:1px;background:linear-gradient(to right,rgba(255,45,107,0.5),transparent);}
-
+.sec-line{flex:1;height:1px;background:linear-gradient(to right,rgba(255,45,107,0.5),transparent);min-width:20px;}
 .reveal{opacity:0;transform:translateY(18px);transition:opacity 0.55s ease,transform 0.55s ease;}
 .reveal.on{opacity:1;transform:none;}
 
-/* ══ ABOUT ══ */
-.lore-tag{
-  font-family:'Share Tech Mono','Courier New',monospace;
-  font-size:0.55rem;color:#ff2d6b;letter-spacing:4px;margin-bottom:14px;
-}
-.lore-head{
-  font-family:'Bebas Neue',Impact,'Arial Narrow',Arial,sans-serif;
-  font-size:clamp(1.6rem,7vw,2.3rem);
-  letter-spacing:2px;line-height:1.1;margin-bottom:20px;color:#e8e0d0;
-}
+/* ABOUT */
+.lore-tag{font-family:‘Share Tech Mono’,‘Courier New’,monospace;font-size:0.55rem;color:#ff2d6b;letter-spacing:4px;margin-bottom:16px;}
+.lore-head{font-family:‘Bebas Neue’,Impact,‘Arial Narrow’,Arial,sans-serif;font-size:clamp(1.6rem,7vw,2.3rem);letter-spacing:2px;line-height:1.1;margin-bottom:24px;color:#e8e0d0;}
 .lore-head em{color:#ff2d6b;font-style:normal;}
-.lore-body{
-  font-family:'Share Tech Mono','Courier New',monospace;
-  font-size:0.74rem;line-height:2.2;
-  color:rgba(232,224,208,0.62);margin-bottom:24px;
-}
+.lore-body{font-family:‘Share Tech Mono’,‘Courier New’,monospace;font-size:0.76rem;line-height:2.3;color:rgba(232,224,208,0.65);margin-bottom:28px;}
 .lore-body .hl{color:#00f5ff;}.lore-body .hl2{color:#ff2d6b;}
-
-.sol-bar{
-  display:flex;align-items:center;gap:14px;
-  padding:16px;margin-bottom:36px;
-  border:1px solid rgba(20,241,149,0.22);
-  background:rgba(20,241,149,0.03);
-}
-.sol-dot{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#9945ff,#14f195);flex-shrink:0;}
-.sol-txt{
-  font-family:'Share Tech Mono','Courier New',monospace;
-  font-size:0.64rem;line-height:1.8;color:rgba(232,224,208,0.62);
-}
+.sol-bar{display:flex;align-items:center;gap:14px;padding:18px;margin-bottom:40px;border:1px solid rgba(20,241,149,0.22);background:rgba(20,241,149,0.03);}
+.sol-dot{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#9945ff,#14f195);flex-shrink:0;}
+.sol-txt{font-family:‘Share Tech Mono’,‘Courier New’,monospace;font-size:0.66rem;line-height:1.9;color:rgba(232,224,208,0.65);}
 .sol-txt strong{color:#14f195;font-weight:400;}
-
 .exp-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-.exp-card{
-  padding:16px 14px;
-  border:1px solid rgba(255,255,255,0.07);
-  background:rgba(255,255,255,0.015);position:relative;
-}
+.exp-card{padding:18px 14px;border:1px solid rgba(255,255,255,0.07);background:rgba(255,255,255,0.015);position:relative;}
 .exp-ico{font-size:1.3rem;margin-bottom:10px;display:block;}
-.exp-nm{
-  font-family:'Bebas Neue',Impact,'Arial Narrow',Arial,sans-serif;
-  font-size:1rem;letter-spacing:2px;color:#e8e0d0;
-  line-height:1.15;margin-bottom:5px;
-}
-.exp-ds{
-  font-family:'Share Tech Mono','Courier New',monospace;
-  font-size:0.54rem;color:#555;letter-spacing:1px;line-height:1.6;
-}
-.exp-badge{
-  position:absolute;top:9px;right:9px;
-  font-family:'Share Tech Mono','Courier New',monospace;
-  font-size:0.42rem;letter-spacing:2px;padding:2px 7px;border:1px solid;
-}
-.live-b{color:#00f5ff;border-color:rgba(0,245,255,0.35);}
-.soon-b{color:#555;border-color:rgba(255,255,255,0.1);}
+.exp-nm{font-family:‘Bebas Neue’,Impact,‘Arial Narrow’,Arial,sans-serif;font-size:1rem;letter-spacing:2px;color:#e8e0d0;line-height:1.15;margin-bottom:6px;}
+.exp-ds{font-family:‘Share Tech Mono’,‘Courier New’,monospace;font-size:0.56rem;color:#555;letter-spacing:1px;line-height:1.7;}
+.exp-badge{position:absolute;top:9px;right:9px;font-family:‘Share Tech Mono’,‘Courier New’,monospace;font-size:0.42rem;letter-spacing:2px;padding:2px 7px;border:1px solid;}
+.live-b{color:#00f5ff;border-color:rgba(0,245,255,0.35);}.soon-b{color:#555;border-color:rgba(255,255,255,0.1);}
 
-/* ══ GALLERY ══ */
-.gallery-intro{
-  font-family:'Share Tech Mono','Courier New',monospace;
-  font-size:0.7rem;line-height:2;color:rgba(232,224,208,0.5);margin-bottom:20px;
-}
+/* GALLERY */
+.gallery-intro{font-family:‘Share Tech Mono’,‘Courier New’,monospace;font-size:0.72rem;line-height:2.1;color:rgba(232,224,208,0.55);margin-bottom:24px;}
 .gallery-intro .hl{color:#ff2d6b;}
-.auction-box{
-  padding:18px;margin-bottom:22px;
-  border:1px solid rgba(255,45,107,0.22);
-  background:rgba(255,45,107,0.04);
-}
-.ab-tag{
-  font-family:'Share Tech Mono','Courier New',monospace;
-  font-size:0.5rem;color:#ff2d6b;letter-spacing:4px;margin-bottom:4px;
-}
-.ab-title{
-  font-family:'Bebas Neue',Impact,'Arial Narrow',Arial,sans-serif;
-  font-size:1.5rem;letter-spacing:3px;color:#e8e0d0;
-}
-.ab-desc{
-  font-family:'Share Tech Mono','Courier New',monospace;
-  font-size:0.62rem;color:#555;
-  letter-spacing:1px;margin:8px 0 16px;line-height:1.8;
-}
+.auction-box{padding:22px;margin-bottom:26px;border:1px solid rgba(255,45,107,0.22);background:rgba(255,45,107,0.04);}
+.ab-tag{font-family:‘Share Tech Mono’,‘Courier New’,monospace;font-size:0.52rem;color:#ff2d6b;letter-spacing:4px;margin-bottom:6px;}
+.ab-title{font-family:‘Bebas Neue’,Impact,‘Arial Narrow’,Arial,sans-serif;font-size:1.6rem;letter-spacing:3px;color:#e8e0d0;margin-bottom:2px;}
+.ab-desc{font-family:‘Share Tech Mono’,‘Courier New’,monospace;font-size:0.64rem;color:#555;letter-spacing:1px;margin:10px 0 18px;line-height:1.9;}
 .nft-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px;}
 .nft-card{position:relative;overflow:hidden;border:1px solid rgba(255,255,255,0.05);background:#0a0a14;}
 .nft-card.big{grid-column:1 / -1;}
 .nft-card img{width:100%;display:block;aspect-ratio:1;object-fit:cover;}
 .nft-card.big img{aspect-ratio:16/9;}
 .nft-over{position:absolute;bottom:0;left:0;right:0;padding:10px 12px 0;background:linear-gradient(to top,rgba(0,0,0,0.88),transparent);}
-.nft-name{
-  font-family:'Bebas Neue',Impact,'Arial Narrow',Arial,sans-serif;
-  font-size:0.95rem;letter-spacing:2px;color:#fff;
-}
-.nft-rarity{font-family:'Share Tech Mono','Courier New',monospace;font-size:0.5rem;letter-spacing:2px;}
-.nft-footer{display:flex;justify-content:space-between;align-items:center;padding:6px 10px;border-top:1px solid rgba(255,255,255,0.04);}
-.nft-id,.nft-rb{font-family:'Share Tech Mono','Courier New',monospace;font-size:0.5rem;letter-spacing:1px;color:#555;}
+.nft-name{font-family:‘Bebas Neue’,Impact,‘Arial Narrow’,Arial,sans-serif;font-size:0.95rem;letter-spacing:2px;color:#fff;}
+.nft-rarity{font-family:‘Share Tech Mono’,‘Courier New’,monospace;font-size:0.5rem;letter-spacing:2px;}
+.nft-footer{display:flex;justify-content:space-between;align-items:center;padding:7px 12px;border-top:1px solid rgba(255,255,255,0.04);}
+.nft-id,.nft-rb{font-family:‘Share Tech Mono’,‘Courier New’,monospace;font-size:0.5rem;letter-spacing:1px;color:#555;}
 
-/* ══ LINKS ══ */
-.links-intro{
-  font-family:'Share Tech Mono','Courier New',monospace;
-  font-size:0.7rem;line-height:2.1;color:rgba(232,224,208,0.5);margin-bottom:28px;
-}
+/* LINKS */
+.links-intro{font-family:‘Share Tech Mono’,‘Courier New’,monospace;font-size:0.72rem;line-height:2.2;color:rgba(232,224,208,0.55);margin-bottom:30px;}
 .link-list{display:flex;flex-direction:column;gap:12px;}
-.lc{
-  display:flex;align-items:center;gap:16px;
-  padding:20px 16px;
-  border:1px solid rgba(255,255,255,0.07);
-  background:#09090f;
-  border-left:3px solid transparent;
-}
-.lc.featured{
-  border-color:rgba(255,45,107,0.2);
-  border-left:3px solid #ff2d6b;
-  background:rgba(255,45,107,0.05);
-  padding:22px 16px;
-}
-.lc-ico{
-  width:44px;height:44px;flex-shrink:0;
-  border:1px solid rgba(255,45,107,0.2);
-  display:flex;align-items:center;justify-content:center;font-size:1.2rem;
-}
+.lc{display:flex;align-items:center;gap:16px;padding:22px 16px;border:1px solid rgba(255,255,255,0.07);background:#09090f;border-left:3px solid transparent;}
+.lc.featured{border-color:rgba(255,45,107,0.2);border-left:3px solid #ff2d6b;background:rgba(255,45,107,0.05);padding:24px 16px;}
+.lc-ico{width:44px;height:44px;flex-shrink:0;border:1px solid rgba(255,45,107,0.2);display:flex;align-items:center;justify-content:center;font-size:1.2rem;}
 .lc-body{flex:1;min-width:0;}
-.lc-tag{
-  font-family:'Share Tech Mono','Courier New',monospace;
-  font-size:0.46rem;color:#ff2d6b;letter-spacing:3px;margin-bottom:4px;
-}
-.lc-name{
-  font-family:'Bebas Neue',Impact,'Arial Narrow',Arial,sans-serif;
-  font-size:1.4rem;letter-spacing:3px;color:#e8e0d0;line-height:1;margin-bottom:5px;
-}
-.lc-desc{
-  font-family:'Share Tech Mono','Courier New',monospace;
-  font-size:0.58rem;color:#555;line-height:1.7;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-}
+.lc-tag{font-family:‘Share Tech Mono’,‘Courier New’,monospace;font-size:0.46rem;color:#ff2d6b;letter-spacing:3px;margin-bottom:5px;}
+.lc-name{font-family:‘Bebas Neue’,Impact,‘Arial Narrow’,Arial,sans-serif;font-size:1.45rem;letter-spacing:3px;color:#e8e0d0;line-height:1;margin-bottom:6px;}
+.lc-desc{font-family:‘Share Tech Mono’,‘Courier New’,monospace;font-size:0.6rem;color:#555;line-height:1.7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .lc-arr{font-size:1rem;color:rgba(255,45,107,0.4);flex-shrink:0;}
 
-/* ══ FOOTER ══ */
-footer{
-  padding:24px var(--p);
-  border-top:1px solid rgba(255,255,255,0.05);
-  text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px;
-  background:#050508;
-}
-.ft-logo{
-  font-family:'Bebas Neue',Impact,'Arial Narrow',Arial,sans-serif;
-  font-size:1.1rem;letter-spacing:6px;color:rgba(232,224,208,0.2);
-}
+/* FOOTER */
+footer{padding:28px var(–p);border-top:1px solid rgba(255,255,255,0.05);text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;background:#050508;}
+.ft-logo{font-family:‘Bebas Neue’,Impact,‘Arial Narrow’,Arial,sans-serif;font-size:1.1rem;letter-spacing:6px;color:rgba(232,224,208,0.2);}
 .ft-logo span{color:rgba(255,45,107,0.35);}
-.ft-sys{font-family:'Share Tech Mono','Courier New',monospace;font-size:0.5rem;color:rgba(0,245,255,0.4);letter-spacing:2px;}
-.ft-copy{font-family:'Share Tech Mono','Courier New',monospace;font-size:0.48rem;color:#555;letter-spacing:1px;}
+.ft-sys{font-family:‘Share Tech Mono’,‘Courier New’,monospace;font-size:0.5rem;color:rgba(0,245,255,0.4);letter-spacing:2px;}
+.ft-copy{font-family:‘Share Tech Mono’,‘Courier New’,monospace;font-size:0.48rem;color:#555;letter-spacing:1px;}
 
-/* ══ ANIMATIONS ══ */
 @keyframes fadeUp{from{opacity:0;transform:translateY(22px);}to{opacity:1;transform:none;}}
 .hero-img{animation:fadeUp 0.6s 0.05s both;}
 .eyebrow{animation:fadeUp 0.6s 0.2s both;}
@@ -444,6 +202,8 @@ footer{
 
 <div class="divider"></div>
 
+<!-- ABOUT -->
+
 <section id="about">
   <div class="sec-head reveal">
     <div class="sec-num">01 //</div>
@@ -478,6 +238,8 @@ footer{
 
 <div class="divider"></div>
 
+<!-- GALLERY -->
+
 <section id="gallery">
   <div class="sec-head reveal">
     <div class="sec-num">02 //</div>
@@ -489,7 +251,7 @@ footer{
     <div class="ab-tag">// ACQUISITION MODEL</div>
     <div class="ab-title">AUCTION &#8212; NOT MINT</div>
     <div class="ab-desc">Fair, community-driven distribution. Every Ronin is auctioned &#8212; no bots, no rush.</div>
-    <a href="https://linktr.ee/theronindao" target="_blank" class="btn btn-outline" style="font-family:'Share Tech Mono',monospace;font-size:0.62rem;letter-spacing:2px;padding:14px;text-align:center;display:block;">VIEW ACTIVE AUCTIONS &#8594;</a>
+    <a href="https://linktr.ee/theronindao" target="_blank" class="btn btn-outline" style="font-family:'Share Tech Mono',monospace;font-size:0.62rem;letter-spacing:2px;padding:16px;text-align:center;display:block;">VIEW ACTIVE AUCTIONS &#8594;</a>
   </div>
   <div class="nft-grid reveal">
     <div class="nft-card big">
@@ -585,13 +347,18 @@ footer{
 
 <div class="divider"></div>
 
+<!-- LINKS -->
+
 <section id="links">
   <div class="sec-head reveal">
     <div class="sec-num">03 //</div>
     <h2 class="sec-title">ENTER THE <span class="a">NETWORK</span></h2>
     <div class="sec-line"></div>
   </div>
-  <p class="links-intro reveal">Stories. Community. Auctions.<br>Everything Ronin &#8212; connected.</p>
+  <p class="links-intro reveal">
+    Stories. Community. Auctions.<br>
+    Everything Ronin &#8212; connected.
+  </p>
   <div class="link-list reveal">
     <a href="https://linktr.ee/theronindao" class="lc featured" target="_blank">
       <div class="lc-ico">&#128214;</div>
