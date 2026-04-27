@@ -1,5 +1,5 @@
-// PolyScout Sports Bot — Minimal Alerts
-// Posts just the game name + link to theronin.xyz/signals
+// PolyScout Sports Bot — TEST MODE (lowered thresholds)
+// After confirming posts work, swap back to normal thresholds
 
 import { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder } from "discord.js";
 import fetch from "node-fetch";
@@ -8,7 +8,7 @@ const TOKEN         = process.env.DISCORD_TOKEN;
 const GAMMA         = "https://gamma-api.polymarket.com";
 const SITE          = "https://theronin.xyz/signals";
 const ALERT_CHANNEL = "polyscout-alerts";
-const SCAN_EVERY    = 5 * 60 * 1000;
+const SCAN_EVERY    = 30 * 1000; // TEST: 30 seconds instead of 5 minutes
 
 function getYesNo(m) {
   const t = m.tokens||[];
@@ -34,44 +34,47 @@ async function getSports() {
   return Array.isArray(d)?d:d.markets||[];
 }
 
+// TEST: very loose filters to guarantee a find
 function findArb(markets) {
   let best=null, bp=0;
   for(const m of markets) {
     const {yp,np}=getYesNo(m); if(!yp||!np) continue;
     const p=parseFloat(((1-yp-np)*100).toFixed(2));
-    if(p>bp){bp=p;best={m,profit:p};}
+    if(p>bp){bp=p;best={m,profit:p,yp,np};}
   }
-  return best;
+  return best; // returns best even if profit is 0 or negative for test
 }
 
 function findTail(markets) {
+  // TEST: loosened to 70¢+ and 30 days
   let best=null, by=0;
   for(const m of markets) {
     const {yp}=getYesNo(m); const d=daysLeft(m.endDate);
-    if(yp&&yp>=0.93&&d!==null&&d<=7&&yp>by){by=yp;best={m,yp,d};}
+    if(yp&&yp>=0.70&&d!==null&&d<=30&&yp>by){by=yp;best={m,yp,d};}
   }
   return best;
 }
 
 function findWin(markets) {
+  // TEST: loosened to any liquid market
   let best=null, bs=0;
   for(const m of markets) {
     const {yp}=getYesNo(m); const liq=parseFloat(m.liquidityNum||0); const vol=parseFloat(m.volume24hr||0);
-    if(yp&&yp>0.05&&yp<0.45&&liq>2000){const s=liq*vol;if(s>bs){bs=s;best={m};}}
+    if(yp&&yp>0.05&&yp<0.70&&liq>500){const s=liq*vol;if(s>bs){bs=s;best={m,yp,liq,vol};}}
   }
   return best;
 }
 
 function findNo(markets) {
+  // TEST: loosened to any high YES market
   let best=null, bv=0;
   for(const m of markets) {
-    const {yp}=getYesNo(m); const vol=parseFloat(m.volume24hr||0);
-    if(yp&&yp>0.62&&yp<0.90&&vol>5000&&vol>bv){bv=vol;best={m};}
+    const {yp,np}=getYesNo(m); const vol=parseFloat(m.volume24hr||0);
+    if(yp&&yp>0.50&&vol>1000&&vol>bv){bv=vol;best={m,yp,np,vol};}
   }
   return best;
 }
 
-// ── minimal alert messages ────────────────────────────────────
 const msg = {
   arb:  m => `⚡ **ARB** — ${title(m)}\n→ ${SITE}`,
   tail: m => `🎯 **TAIL** — ${title(m)}\n→ ${SITE}`,
@@ -79,7 +82,6 @@ const msg = {
   no:   m => `📉 **NO EDGE** — ${title(m)}\n→ ${SITE}`,
 };
 
-// ── slash commands ────────────────────────────────────────────
 const commands = [
   new SlashCommandBuilder().setName("best").setDescription("Top picks right now"),
   new SlashCommandBuilder().setName("arb").setDescription("Best arbitrage in sports"),
@@ -88,18 +90,16 @@ const commands = [
   new SlashCommandBuilder().setName("no").setDescription("Most overpriced YES"),
 ].map(c=>c.toJSON());
 
-// ── bot ───────────────────────────────────────────────────────
 const client = new Client({ intents:[GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages] });
 
 client.once("ready", async () => {
-  console.log(`✅ PolyScout online as ${client.user.tag}`);
+  console.log(`✅ PolyScout TEST MODE online as ${client.user.tag}`);
   const rest = new REST({version:"10"}).setToken(TOKEN);
   await rest.put(Routes.applicationCommands(client.user.id), {body:commands});
-  console.log("✅ Commands registered");
+  console.log("✅ Commands registered — scanning every 30 seconds");
   startLoop();
 });
 
-// ── auto scan ─────────────────────────────────────────────────
 const alerted = new Set();
 
 function getChannel() {
@@ -111,32 +111,35 @@ function getChannel() {
 }
 
 function startLoop() {
-  setInterval(async () => {
-    try {
-      const markets = await getSports();
-      const ch = getChannel();
-      if(!ch){ console.log(`⚠️  Create #${ALERT_CHANNEL} in your server`); return; }
-
-      const a=findArb(markets), t=findTail(markets), n=findNo(markets);
-
-      if(a&&!alerted.has(`arb-${a.m.id}`)){ await ch.send(msg.arb(a.m)); alerted.add(`arb-${a.m.id}`); }
-      if(t&&!alerted.has(`tail-${t.m.id}`)){ await ch.send(msg.tail(t.m)); alerted.add(`tail-${t.m.id}`); }
-      if(n&&!alerted.has(`no-${n.m.id}`)){ await ch.send(msg.no(n.m)); alerted.add(`no-${n.m.id}`); }
-
-      if(alerted.size>300) alerted.clear();
-      console.log(`🔍 Scanned ${markets.length} sports markets`);
-    } catch(e){ console.error("Scan error:",e.message); }
-  }, SCAN_EVERY);
+  // post immediately on start for instant test
+  runScan();
+  setInterval(runScan, SCAN_EVERY);
 }
 
-// ── slash commands handler ────────────────────────────────────
+async function runScan() {
+  try {
+    const markets = await getSports();
+    const ch = getChannel();
+    if(!ch){ console.log(`⚠️  Create #${ALERT_CHANNEL} in your server`); return; }
+
+    const a=findArb(markets), t=findTail(markets), n=findNo(markets), w=findWin(markets);
+
+    if(a&&!alerted.has(`arb-${a.m.id}`)){ await ch.send(msg.arb(a.m)); alerted.add(`arb-${a.m.id}`); console.log("Posted ARB"); }
+    if(t&&!alerted.has(`tail-${t.m.id}`)){ await ch.send(msg.tail(t.m)); alerted.add(`tail-${t.m.id}`); console.log("Posted TAIL"); }
+    if(w&&!alerted.has(`win-${w.m.id}`)){ await ch.send(msg.win(w.m)); alerted.add(`win-${w.m.id}`); console.log("Posted WIN"); }
+    if(n&&!alerted.has(`no-${n.m.id}`)){ await ch.send(msg.no(n.m)); alerted.add(`no-${n.m.id}`); console.log("Posted NO EDGE"); }
+
+    if(alerted.size>300) alerted.clear();
+    console.log(`🔍 Scanned ${markets.length} sports markets`);
+  } catch(e){ console.error("Scan error:",e.message); }
+}
+
 client.on("interactionCreate", async interaction => {
   if(!interaction.isChatInputCommand()) return;
   await interaction.deferReply();
   try {
     const markets = await getSports();
     const cmd = interaction.commandName;
-
     if(cmd==="best") {
       const a=findArb(markets), t=findTail(markets), w=findWin(markets), n=findNo(markets);
       const lines = [
@@ -147,22 +150,11 @@ client.on("interactionCreate", async interaction => {
       ].filter(Boolean);
       await interaction.editReply(lines.length ? lines.join("\n\n") : `No signals right now.\n→ ${SITE}`);
     }
-    else if(cmd==="arb"){  const a=findArb(markets);  await interaction.editReply(a  ? msg.arb(a.m)  : `No arb right now → ${SITE}`); }
-    else if(cmd==="tail"){ const t=findTail(markets); await interaction.editReply(t  ? msg.tail(t.m) : `No tail plays → ${SITE}`); }
-    else if(cmd==="win"){  const w=findWin(markets);  await interaction.editReply(w  ? msg.win(w.m)  : `No value plays → ${SITE}`); }
+    else if(cmd==="arb"){  const a=findArb(markets);  await interaction.editReply(a  ? msg.arb(a.m)  : `No arb → ${SITE}`); }
+    else if(cmd==="tail"){ const t=findTail(markets); await interaction.editReply(t  ? msg.tail(t.m) : `No tail → ${SITE}`); }
+    else if(cmd==="win"){  const w=findWin(markets);  await interaction.editReply(w  ? msg.win(w.m)  : `No value → ${SITE}`); }
     else if(cmd==="no"){   const n=findNo(markets);   await interaction.editReply(n  ? msg.no(n.m)   : `No NO edge → ${SITE}`); }
-
   } catch(e){ await interaction.editReply("❌ Error. Try again."); }
 });
 
 client.login(TOKEN);
-
-// ============================================================
-//  SETUP
-//  1. discord.com/developers → Bot → copy token
-//  2. replit.com → Node.js → paste as index.js
-//  3. Secrets → DISCORD_TOKEN = your token
-//  4. Create #polyscout-alerts in Discord
-//  5. Upload signals.html to GitHub repo → theronin.xyz/signals
-//  6. Hit Run
-// ============================================================
