@@ -1,4 +1,4 @@
-// PolyScout Sports Bot — TEST MODE (channel ID)
+// PolyScout Sports Bot — DEBUG MODE
 
 import { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder } from "discord.js";
 import fetch from "node-fetch";
@@ -7,7 +7,7 @@ const TOKEN      = process.env.DISCORD_TOKEN;
 const GAMMA      = "https://gamma-api.polymarket.com";
 const SITE       = "https://theronin.xyz/signals";
 const CHANNEL_ID = "1498195141997891615";
-const SCAN_EVERY = 30 * 1000; // 30 seconds for testing
+const SCAN_EVERY = 30 * 1000;
 
 function getYesNo(m) {
   const t = m.tokens||[];
@@ -100,23 +100,37 @@ const alerted = new Set();
 async function runScan() {
   try {
     const markets = await getSports();
-    const ch = await client.channels.fetch(CHANNEL_ID);
-    if(!ch){ console.log("❌ Channel not found"); return; }
+
+    // debug: show first 3 markets raw data
+    console.log("--- DEBUG SAMPLE ---");
+    markets.slice(0,3).forEach((m,i) => {
+      const {yp,np} = getYesNo(m);
+      const d = daysLeft(m.endDate);
+      const vol = parseFloat(m.volume24hr||0);
+      const liq = parseFloat(m.liquidityNum||0);
+      console.log(`${i+1}. "${title(m)}" | YES:${yp} NO:${np} | vol:${vol} liq:${liq} days:${d}`);
+    });
 
     const a=findArb(markets), t=findTail(markets), w=findWin(markets), n=findNo(markets);
+    console.log(`ARB: ${a?title(a.m)+" profit:"+a.profit:"none"}`);
+    console.log(`TAIL: ${t?title(t.m)+" yp:"+t.yp:"none"}`);
+    console.log(`WIN: ${w?title(w.m):"none"}`);
+    console.log(`NO: ${n?title(n.m):"none"}`);
+
+    const ch = await client.channels.fetch(CHANNEL_ID);
+    if(!ch){ console.log("❌ Channel not found"); return; }
 
     if(a&&!alerted.has(`arb-${a.m.id}`)){ await ch.send(msg.arb(a.m)); alerted.add(`arb-${a.m.id}`); console.log("✅ Posted ARB"); }
     if(t&&!alerted.has(`tail-${t.m.id}`)){ await ch.send(msg.tail(t.m)); alerted.add(`tail-${t.m.id}`); console.log("✅ Posted TAIL"); }
     if(w&&!alerted.has(`win-${w.m.id}`)){ await ch.send(msg.win(w.m)); alerted.add(`win-${w.m.id}`); console.log("✅ Posted WIN"); }
     if(n&&!alerted.has(`no-${n.m.id}`)){ await ch.send(msg.no(n.m)); alerted.add(`no-${n.m.id}`); console.log("✅ Posted NO EDGE"); }
 
-    if(alerted.size>300) alerted.clear();
     console.log(`🔍 Scanned ${markets.length} markets`);
   } catch(e){ console.error("Scan error:", e.message); }
 }
 
 function startLoop() {
-  runScan(); // post immediately
+  runScan();
   setInterval(runScan, SCAN_EVERY);
 }
 
