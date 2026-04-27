@@ -1,4 +1,4 @@
-// PolyScout Sports Bot — Final Version
+// PolyScout Bot — Sports, Politics, Crypto, Economy
 // theronin.xyz/signals
 
 import { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder } from "discord.js";
@@ -10,7 +10,14 @@ const SITE       = "https://theronin.xyz/signals";
 const CHANNEL_ID = "1498195141997891615";
 const SCAN_EVERY = 5 * 60 * 1000; // 5 minutes
 
-// ── price reader — handles sports market format ───────────────
+const CATEGORIES = [
+  { tag: "sports",   emoji: "⚽", label: "SPORTS"   },
+  { tag: "politics", emoji: "🗳️", label: "POLITICS" },
+  { tag: "crypto",   emoji: "💰", label: "CRYPTO"   },
+  { tag: "economy",  emoji: "💼", label: "ECONOMY"  },
+];
+
+// ── price reader ──────────────────────────────────────────────
 function getPrices(m) {
   try {
     if (m.outcomePrices) {
@@ -38,9 +45,10 @@ function daysLeft(d) {
 
 function title(m) { return (m.question||m.title||"Unknown").slice(0,55); }
 
-async function getSports() {
+// ── fetch by category ─────────────────────────────────────────
+async function fetchCategory(tag) {
   const res = await fetch(
-    `${GAMMA}/markets?active=true&closed=false&tag=sports&limit=100&order=volume24hr&ascending=false`,
+    `${GAMMA}/markets?active=true&closed=false&tag=${tag}&limit=100&order=volume24hr&ascending=false`,
     { headers: { "User-Agent": "PolyScout/1.0" } }
   );
   if(!res.ok) throw new Error(`API ${res.status}`);
@@ -48,9 +56,17 @@ async function getSports() {
   return Array.isArray(d)?d:d.markets||[];
 }
 
-// ── strategy finders — real thresholds ───────────────────────
+async function fetchAll() {
+  const results = await Promise.all(
+    CATEGORIES.map(async c => {
+      const markets = await fetchCategory(c.tag);
+      return markets.map(m => ({ ...m, _cat: c }));
+    })
+  );
+  return results.flat();
+}
 
-// Arbitrage: both outcomes sum to less than $1.00
+// ── strategy finders ──────────────────────────────────────────
 function findArb(markets) {
   let best=null, bp=0;
   for(const m of markets) {
@@ -61,7 +77,6 @@ function findArb(markets) {
   return best;
 }
 
-// Tail-end: outcome priced 93¢+ with 7 days or less left
 function findTail(markets) {
   let best=null, by=0;
   for(const m of markets) {
@@ -72,7 +87,6 @@ function findTail(markets) {
   return best;
 }
 
-// Best win: lowest priced outcome in a deep liquid market
 function findWin(markets) {
   let best=null, bs=0;
   for(const m of markets) {
@@ -81,13 +95,12 @@ function findWin(markets) {
     const vol=parseFloat(m.volume24hr||0);
     if(p.worst>0.05&&p.worst<0.45&&liq>5000){
       const s=liq*vol;
-      if(s>bs){bs=s;best={m,yp:p.worst,liq,vol};}
+      if(s>bs){bs=s;best={m,yp:p.worst};}
     }
   }
   return best;
 }
 
-// NO edge: high volume market where favourite is overpriced 62¢–90¢
 function findNo(markets) {
   let best=null, bv=0;
   for(const m of markets) {
@@ -98,24 +111,30 @@ function findNo(markets) {
   return best;
 }
 
-// ── alert messages ────────────────────────────────────────────
+// ── alert messages with category tag ─────────────────────────
+function catTag(m) { return m._cat ? `[${m._cat.label}]` : ""; }
+
 const msg = {
-  arb:  m => `⚡ **ARB** — ${title(m)}\n→ ${SITE}`,
-  tail: m => `🎯 **TAIL** — ${title(m)}\n→ ${SITE}`,
-  win:  m => `🏆 **VALUE** — ${title(m)}\n→ ${SITE}`,
-  no:   m => `📉 **NO EDGE** — ${title(m)}\n→ ${SITE}`,
+  arb:  m => `⚡ **ARB** ${catTag(m)} — ${title(m)}\n→ ${SITE}`,
+  tail: m => `🎯 **TAIL** ${catTag(m)} — ${title(m)}\n→ ${SITE}`,
+  win:  m => `🏆 **VALUE** ${catTag(m)} — ${title(m)}\n→ ${SITE}`,
+  no:   m => `📉 **NO EDGE** ${catTag(m)} — ${title(m)}\n→ ${SITE}`,
 };
 
 // ── slash commands ────────────────────────────────────────────
 const commands = [
-  new SlashCommandBuilder().setName("best").setDescription("Top picks right now"),
-  new SlashCommandBuilder().setName("arb").setDescription("Best arbitrage in sports"),
+  new SlashCommandBuilder().setName("best").setDescription("Top picks across all categories"),
+  new SlashCommandBuilder().setName("arb").setDescription("Best arbitrage right now"),
   new SlashCommandBuilder().setName("tail").setDescription("Best tail-end play"),
   new SlashCommandBuilder().setName("win").setDescription("Best value odds"),
   new SlashCommandBuilder().setName("no").setDescription("Most overpriced favourite"),
+  new SlashCommandBuilder().setName("sports").setDescription("Best sports signal"),
+  new SlashCommandBuilder().setName("politics").setDescription("Best politics signal"),
+  new SlashCommandBuilder().setName("crypto").setDescription("Best crypto signal"),
+  new SlashCommandBuilder().setName("economy").setDescription("Best economy signal"),
 ].map(c=>c.toJSON());
 
-// ── bot setup ─────────────────────────────────────────────────
+// ── bot ───────────────────────────────────────────────────────
 const client = new Client({ intents:[GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages] });
 
 client.once("ready", async () => {
@@ -131,7 +150,7 @@ const alerted = new Set();
 
 async function runScan() {
   try {
-    const markets = await getSports();
+    const markets = await fetchAll();
     const ch = await client.channels.fetch(CHANNEL_ID);
     if(!ch){ console.log("❌ Channel not found"); return; }
 
@@ -139,12 +158,12 @@ async function runScan() {
     const t=findTail(markets);
     const n=findNo(markets);
 
-    if(a&&!alerted.has(`arb-${a.m.id}`)){ await ch.send(msg.arb(a.m)); alerted.add(`arb-${a.m.id}`); console.log(`✅ ARB: ${title(a.m)}`); }
-    if(t&&!alerted.has(`tail-${t.m.id}`)){ await ch.send(msg.tail(t.m)); alerted.add(`tail-${t.m.id}`); console.log(`✅ TAIL: ${title(t.m)}`); }
-    if(n&&!alerted.has(`no-${n.m.id}`)){ await ch.send(msg.no(n.m)); alerted.add(`no-${n.m.id}`); console.log(`✅ NO: ${title(n.m)}`); }
+    if(a&&!alerted.has(`arb-${a.m.id}`)){ await ch.send(msg.arb(a.m)); alerted.add(`arb-${a.m.id}`); console.log(`✅ ARB [${a.m._cat?.label}]: ${title(a.m)}`); }
+    if(t&&!alerted.has(`tail-${t.m.id}`)){ await ch.send(msg.tail(t.m)); alerted.add(`tail-${t.m.id}`); console.log(`✅ TAIL [${t.m._cat?.label}]: ${title(t.m)}`); }
+    if(n&&!alerted.has(`no-${n.m.id}`)){ await ch.send(msg.no(n.m)); alerted.add(`no-${n.m.id}`); console.log(`✅ NO [${n.m._cat?.label}]: ${title(n.m)}`); }
 
-    if(alerted.size>300) alerted.clear();
-    console.log(`🔍 Scanned ${markets.length} markets`);
+    if(alerted.size>500) alerted.clear();
+    console.log(`🔍 Scanned ${markets.length} markets across 4 categories`);
   } catch(e){ console.error("Scan error:", e.message); }
 }
 
@@ -158,23 +177,35 @@ client.on("interactionCreate", async interaction => {
   if(!interaction.isChatInputCommand()) return;
   await interaction.deferReply();
   try {
-    const markets = await getSports();
     const cmd = interaction.commandName;
+
+    // category-specific commands
+    const catCmd = CATEGORIES.find(c => c.tag === cmd);
+    if(catCmd) {
+      const markets = (await fetchCategory(catCmd.tag)).map(m=>({...m,_cat:catCmd}));
+      const a=findArb(markets), t=findTail(markets), w=findWin(markets), n=findNo(markets);
+      const lines = [
+        a?msg.arb(a.m):null, t?msg.tail(t.m):null,
+        w?msg.win(w.m):null, n?msg.no(n.m):null,
+      ].filter(Boolean);
+      await interaction.editReply(lines.length?lines.join("\n\n"):`No signals in ${catCmd.label} right now.\n→ ${SITE}`);
+      return;
+    }
+
+    const markets = await fetchAll();
 
     if(cmd==="best") {
       const a=findArb(markets), t=findTail(markets), w=findWin(markets), n=findNo(markets);
       const lines = [
-        a ? msg.arb(a.m)  : null,
-        t ? msg.tail(t.m) : null,
-        w ? msg.win(w.m)  : null,
-        n ? msg.no(n.m)   : null,
+        a?msg.arb(a.m):null, t?msg.tail(t.m):null,
+        w?msg.win(w.m):null, n?msg.no(n.m):null,
       ].filter(Boolean);
-      await interaction.editReply(lines.length ? lines.join("\n\n") : `No signals right now.\n→ ${SITE}`);
+      await interaction.editReply(lines.length?lines.join("\n\n"):`No signals right now.\n→ ${SITE}`);
     }
-    else if(cmd==="arb"){  const a=findArb(markets);  await interaction.editReply(a ? msg.arb(a.m)  : `No arb right now → ${SITE}`); }
-    else if(cmd==="tail"){ const t=findTail(markets); await interaction.editReply(t ? msg.tail(t.m) : `No tail plays → ${SITE}`); }
-    else if(cmd==="win"){  const w=findWin(markets);  await interaction.editReply(w ? msg.win(w.m)  : `No value plays → ${SITE}`); }
-    else if(cmd==="no"){   const n=findNo(markets);   await interaction.editReply(n ? msg.no(n.m)   : `No NO edge → ${SITE}`); }
+    else if(cmd==="arb"){  const a=findArb(markets);  await interaction.editReply(a?msg.arb(a.m) :`No arb right now → ${SITE}`); }
+    else if(cmd==="tail"){ const t=findTail(markets); await interaction.editReply(t?msg.tail(t.m):`No tail plays → ${SITE}`); }
+    else if(cmd==="win"){  const w=findWin(markets);  await interaction.editReply(w?msg.win(w.m) :`No value plays → ${SITE}`); }
+    else if(cmd==="no"){   const n=findNo(markets);   await interaction.editReply(n?msg.no(n.m)  :`No NO edge → ${SITE}`); }
 
   } catch(e){ await interaction.editReply("❌ Error fetching data. Try again."); }
 });
