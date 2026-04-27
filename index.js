@@ -1,14 +1,13 @@
-// PolyScout Sports Bot — TEST MODE (lowered thresholds)
-// After confirming posts work, swap back to normal thresholds
+// PolyScout Sports Bot — TEST MODE (channel ID)
 
 import { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder } from "discord.js";
 import fetch from "node-fetch";
 
-const TOKEN         = process.env.DISCORD_TOKEN;
-const GAMMA         = "https://gamma-api.polymarket.com";
-const SITE          = "https://theronin.xyz/signals";
-const ALERT_CHANNEL = "polyscout-alerts";
-const SCAN_EVERY    = 30 * 1000; // TEST: 30 seconds instead of 5 minutes
+const TOKEN      = process.env.DISCORD_TOKEN;
+const GAMMA      = "https://gamma-api.polymarket.com";
+const SITE       = "https://theronin.xyz/signals";
+const CHANNEL_ID = "1498195141997891615";
+const SCAN_EVERY = 30 * 1000; // 30 seconds for testing
 
 function getYesNo(m) {
   const t = m.tokens||[];
@@ -34,19 +33,17 @@ async function getSports() {
   return Array.isArray(d)?d:d.markets||[];
 }
 
-// TEST: very loose filters to guarantee a find
 function findArb(markets) {
-  let best=null, bp=0;
+  let best=null, bp=-99;
   for(const m of markets) {
     const {yp,np}=getYesNo(m); if(!yp||!np) continue;
     const p=parseFloat(((1-yp-np)*100).toFixed(2));
     if(p>bp){bp=p;best={m,profit:p,yp,np};}
   }
-  return best; // returns best even if profit is 0 or negative for test
+  return best;
 }
 
 function findTail(markets) {
-  // TEST: loosened to 70¢+ and 30 days
   let best=null, by=0;
   for(const m of markets) {
     const {yp}=getYesNo(m); const d=daysLeft(m.endDate);
@@ -56,7 +53,6 @@ function findTail(markets) {
 }
 
 function findWin(markets) {
-  // TEST: loosened to any liquid market
   let best=null, bs=0;
   for(const m of markets) {
     const {yp}=getYesNo(m); const liq=parseFloat(m.liquidityNum||0); const vol=parseFloat(m.volume24hr||0);
@@ -66,7 +62,6 @@ function findWin(markets) {
 }
 
 function findNo(markets) {
-  // TEST: loosened to any high YES market
   let best=null, bv=0;
   for(const m of markets) {
     const {yp,np}=getYesNo(m); const vol=parseFloat(m.volume24hr||0);
@@ -93,45 +88,36 @@ const commands = [
 const client = new Client({ intents:[GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages] });
 
 client.once("ready", async () => {
-  console.log(`✅ PolyScout TEST MODE online as ${client.user.tag}`);
+  console.log(`✅ PolyScout online as ${client.user.tag}`);
   const rest = new REST({version:"10"}).setToken(TOKEN);
   await rest.put(Routes.applicationCommands(client.user.id), {body:commands});
-  console.log("✅ Commands registered — scanning every 30 seconds");
+  console.log("✅ Commands registered");
   startLoop();
 });
 
 const alerted = new Set();
 
-function getChannel() {
-  for(const g of client.guilds.cache.values()) {
-    const ch = g.channels.cache.find(c=>c.name===ALERT_CHANNEL&&c.isTextBased());
-    if(ch) return ch;
-  }
-  return null;
-}
-
-function startLoop() {
-  // post immediately on start for instant test
-  runScan();
-  setInterval(runScan, SCAN_EVERY);
-}
-
 async function runScan() {
   try {
     const markets = await getSports();
-    const ch = getChannel();
-    if(!ch){ console.log(`⚠️  Create #${ALERT_CHANNEL} in your server`); return; }
+    const ch = await client.channels.fetch(CHANNEL_ID);
+    if(!ch){ console.log("❌ Channel not found"); return; }
 
-    const a=findArb(markets), t=findTail(markets), n=findNo(markets), w=findWin(markets);
+    const a=findArb(markets), t=findTail(markets), w=findWin(markets), n=findNo(markets);
 
-    if(a&&!alerted.has(`arb-${a.m.id}`)){ await ch.send(msg.arb(a.m)); alerted.add(`arb-${a.m.id}`); console.log("Posted ARB"); }
-    if(t&&!alerted.has(`tail-${t.m.id}`)){ await ch.send(msg.tail(t.m)); alerted.add(`tail-${t.m.id}`); console.log("Posted TAIL"); }
-    if(w&&!alerted.has(`win-${w.m.id}`)){ await ch.send(msg.win(w.m)); alerted.add(`win-${w.m.id}`); console.log("Posted WIN"); }
-    if(n&&!alerted.has(`no-${n.m.id}`)){ await ch.send(msg.no(n.m)); alerted.add(`no-${n.m.id}`); console.log("Posted NO EDGE"); }
+    if(a&&!alerted.has(`arb-${a.m.id}`)){ await ch.send(msg.arb(a.m)); alerted.add(`arb-${a.m.id}`); console.log("✅ Posted ARB"); }
+    if(t&&!alerted.has(`tail-${t.m.id}`)){ await ch.send(msg.tail(t.m)); alerted.add(`tail-${t.m.id}`); console.log("✅ Posted TAIL"); }
+    if(w&&!alerted.has(`win-${w.m.id}`)){ await ch.send(msg.win(w.m)); alerted.add(`win-${w.m.id}`); console.log("✅ Posted WIN"); }
+    if(n&&!alerted.has(`no-${n.m.id}`)){ await ch.send(msg.no(n.m)); alerted.add(`no-${n.m.id}`); console.log("✅ Posted NO EDGE"); }
 
     if(alerted.size>300) alerted.clear();
-    console.log(`🔍 Scanned ${markets.length} sports markets`);
-  } catch(e){ console.error("Scan error:",e.message); }
+    console.log(`🔍 Scanned ${markets.length} markets`);
+  } catch(e){ console.error("Scan error:", e.message); }
+}
+
+function startLoop() {
+  runScan(); // post immediately
+  setInterval(runScan, SCAN_EVERY);
 }
 
 client.on("interactionCreate", async interaction => {
@@ -142,18 +128,13 @@ client.on("interactionCreate", async interaction => {
     const cmd = interaction.commandName;
     if(cmd==="best") {
       const a=findArb(markets), t=findTail(markets), w=findWin(markets), n=findNo(markets);
-      const lines = [
-        a ? msg.arb(a.m)  : null,
-        t ? msg.tail(t.m) : null,
-        w ? msg.win(w.m)  : null,
-        n ? msg.no(n.m)   : null,
-      ].filter(Boolean);
+      const lines = [a?msg.arb(a.m):null, t?msg.tail(t.m):null, w?msg.win(w.m):null, n?msg.no(n.m):null].filter(Boolean);
       await interaction.editReply(lines.length ? lines.join("\n\n") : `No signals right now.\n→ ${SITE}`);
     }
-    else if(cmd==="arb"){  const a=findArb(markets);  await interaction.editReply(a  ? msg.arb(a.m)  : `No arb → ${SITE}`); }
-    else if(cmd==="tail"){ const t=findTail(markets); await interaction.editReply(t  ? msg.tail(t.m) : `No tail → ${SITE}`); }
-    else if(cmd==="win"){  const w=findWin(markets);  await interaction.editReply(w  ? msg.win(w.m)  : `No value → ${SITE}`); }
-    else if(cmd==="no"){   const n=findNo(markets);   await interaction.editReply(n  ? msg.no(n.m)   : `No NO edge → ${SITE}`); }
+    else if(cmd==="arb"){  const a=findArb(markets);  await interaction.editReply(a?msg.arb(a.m) :`No arb → ${SITE}`); }
+    else if(cmd==="tail"){ const t=findTail(markets); await interaction.editReply(t?msg.tail(t.m):`No tail → ${SITE}`); }
+    else if(cmd==="win"){  const w=findWin(markets);  await interaction.editReply(w?msg.win(w.m) :`No value → ${SITE}`); }
+    else if(cmd==="no"){   const n=findNo(markets);   await interaction.editReply(n?msg.no(n.m)  :`No NO edge → ${SITE}`); }
   } catch(e){ await interaction.editReply("❌ Error. Try again."); }
 });
 
